@@ -174,13 +174,22 @@ pub struct AsyncFile<S> {
     stream: Arc<S>,
 }
 
-impl<S> AsyncFile<S> {
+impl<S> AsyncFile<S>
+where
+    S: AsyncSessionStream + Send + Sync + 'static,
+{
     pub(crate) fn from_parts(inner: File, sess: Session, stream: Arc<S>) -> Self {
         Self {
             inner,
             sess,
             stream,
         }
+    }
+
+    pub async fn readdir(&mut self) -> Result<(PathBuf, FileStat), Error> {
+        self.stream
+            .rw_with(|| self.inner.readdir(), &self.sess)
+            .await
     }
 }
 
