@@ -78,7 +78,10 @@ impl AsyncSessionStream for TcpStream {
 
         match sess.block_directions() {
             BlockDirections::None => {
-                unreachable!("")
+                return match op() {
+                    Err(err) if err.kind() == IoErrorKind::WouldBlock => Poll::Pending,
+                    ret => Poll::Ready(ret),
+                }
             }
             BlockDirections::Inbound => {
                 assert!(expected_block_directions.is_readable());
